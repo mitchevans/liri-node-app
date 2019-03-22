@@ -2,9 +2,9 @@ require("dotenv").config();
 
 var keys = require("./keys.js");
 var axios = require("axios");
-var spotify = require("node-spotify-api");
+var Spotify = require("node-spotify-api");
 var fs = require("fs");
-
+var spotify = new Spotify(keys.spotify);
 var nodeArgs = process.argv;
 var command = nodeArgs[2];
 var userInput = nodeArgs.slice(3).join(" ");
@@ -16,7 +16,7 @@ switch (command) {
     break;
 
     case "spotify-this-song":
-    spotify();
+    spotifySong();
     break;
 
     case "movie-this":
@@ -36,14 +36,14 @@ function concert(){
         var concertData = response.data;
         
         for (i = 0; i < concertData.length; i++){
-        // showData ends up being the string containing the show data we will print to the console
+      
        var concertArray = [
         "Venue: " + concertData[i].venue.name,
         "Location: " + concertData[i].venue.country + " " + concertData[i].venue.city,
         "Date: " + concertData[i].datetime
         ].join("\n\n");
   
-        // Append showData and the divider to log.txt, print showData to the console
+        // append concertData and the divider to log.txt console log concertArray
         fs.appendFile("log.txt", concertArray + divider, function(err) {
           if (err) throw err;
           console.log(concertArray);
@@ -52,24 +52,40 @@ function concert(){
       });
 }
 
-function spotify(){
-    var spotify = new Spotify(keys.spotify);
+function spotifySong(){
+    
     if (!userInput) {
         userInput = "The Sign";
     }
-    spotify.search({ type: 'track', query: "the sign"}, function(err, data) {
+    spotify.search({ type: 'track', query: userInput}, function(err, data) {
         if (err) {
           return console.log('Error occurred: ' + err);
         }
        
-      console.log(data); 
+      var songInfo = data.tracks.items;
+      
+      var songArray = [
+	        "Artist(s): " + songInfo[0].artists[0].name,
+	        "Song Name: " + songInfo[0].name,
+	        "Preview Link: " + (src = songInfo[0].preview_url),
+          "Album: " + songInfo[0].album.name
+      ].join("\n\n");
+  
+      // append songArray and the divider to log.txt, console log songArray
+      fs.appendFile("log.txt", songArray + divider, function(err) {
+        if (err) throw err;
+        console.log(songArray);
       });
-        //var songInfo = [
-         //   d
-       // ]
+      });
+
+
+        
 }
 
 function movie() {
+    if (!userInput) {
+    userInput = "Mr. Nobody";
+    }
     var queryUrl = "http://www.omdbapi.com/?t=" + userInput + "&y=&plot=short&apikey=trilogy";
     
     axios.get(queryUrl).then(
@@ -86,7 +102,7 @@ function movie() {
             "Actors: " + response.data.Actors
             ].join("\n\n");
       
-            // Append showData and the divider to log.txt, print showData to the console
+            // append movieArray and the divider to log.txt, console log movieArray
             fs.appendFile("log.txt", movieArray + divider, function(err) {
               if (err) throw err;
               console.log(movieArray);
@@ -94,6 +110,19 @@ function movie() {
       }
     );
 
+}
+
+function doWhat () {
+  fs.readFile('random.txt', "utf8", (err, data) => {
+    if (err) throw err;
+
+    var textArray = data.split(',');
+    userInput= textArray[1];
+  
+    spotifySong(userInput);
+  });
+  
+  
 }
 
 
